@@ -1,5 +1,5 @@
 # MS-SQL
-In this repository there are series of SQL codes, showing the some commonly used functions, commands and queries. In all of the codes, there many queries, and to execute one or more of them, we need to select the whole query or queries, and then press F5. If we just press F5 (or the execute button), without selecting, we'll be running all the queries in the code.
+In this repository there are series of SQL codes, showing some commonly used functions, commands and queries. In all of the codes, there many queries, and to execute one or more of them, we need to select the whole query or queries, and then press F5. If we just press F5 (or the execute button), without selecting, we'll be running all the queries in the code.
 The content of each SQL code is:
 
 1. SELECT, SELECT DISTINCT, FROM, CASE-WHEN-ELSE and AS clauses. These are the basic commands, to select columns, tables to get the colummns, if-else in SQL and to give aliases.
