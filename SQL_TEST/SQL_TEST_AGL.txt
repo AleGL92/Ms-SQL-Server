@@ -1,0 +1,137 @@
+-- SQL TEST
+-- 1. Make the DDL script to create the tables EMPLOYEES and DEPARTMENTS. Consider every field must have the most suitable data type. (Create primaries and foreign keys is not needed).
+
+CREATE TABLE EMPLOYEES
+	(ID INT NOT NULL,
+	Name VARCHAR(50),
+	Age INT,
+	Salary INT,
+	Bonus INT,
+	Address_City VARCHAR(50),
+	Dep_Id INT NOT NULL);
+
+CREATE TABLE DEPARTMENTS
+	(ID INT NOT NULL,
+	Name VARCHAR(50),
+	Location VARCHAR(50),
+	Budget_Last_Year INT,
+	Budget_This_Year INT,
+	Mgr_Id INT);
+
+
+-- 2. Make the DML script to load the tables with the same data you have in the reference tables.
+
+INSERT INTO EMPLOYEES(ID, Name, Age, Salary, Bonus, Address_City, Dep_Id) 
+VALUES (1,'Mary', 25, 1000, NULL, 'Tarragona', 1);
+INSERT INTO EMPLOYEES(ID, Name, Age, Salary, Bonus, Address_City, Dep_Id) 
+VALUES (2,'John', 51, 900, 300, 'Barcelona', 2);
+INSERT INTO EMPLOYEES(ID, Name, Age, Salary, Bonus, Address_City, Dep_Id) 
+VALUES (3,'Peter', 34, 1500, NULL, 'Barcelona', 2);
+INSERT INTO EMPLOYEES(ID, Name, Age, Salary, Bonus, Address_City, Dep_Id) 
+VALUES (4,'Ann', 42, 2300, 250, 'Barcelona', 3);
+INSERT INTO EMPLOYEES(ID, Name, Age, Salary, Bonus, Address_City, Dep_Id) 
+VALUES (5,'Lisa', 33, 1700, NULL, 'Tarragona', 3);
+
+INSERT INTO DEPARTMENTS (ID, Name, Location, Budget_Last_Year, Budget_This_Year, Mgr_Id) 
+VALUES (1,'HR', 'Tarragona', 10, 12, 1);
+INSERT INTO DEPARTMENTS (ID, Name, Location, Budget_Last_Year, Budget_This_Year, Mgr_Id) 
+VALUES (2,'Sales', 'Barcelona', 20, 25, 2);
+INSERT INTO DEPARTMENTS (ID, Name, Location, Budget_Last_Year, Budget_This_Year, Mgr_Id) 
+VALUES (3,'BI', 'Barcelona', NULL, 7,5);
+INSERT INTO DEPARTMENTS (ID, Name, Location, Budget_Last_Year, Budget_This_Year, Mgr_Id) 
+VALUES (4,'R+D', 'Barcelona', 5, 10, NULL);
+
+
+-- 3.1 % of departments without manager
+SELECT(
+	(SELECT 1.0*COUNT(*)
+	FROM DEPARTMENTS
+	WHERE Mgr_Id IS NULL)/COUNT(*)*100) AS '% departments no manager'
+FROM DEPARTMENTS;
+
+
+-- 3.2. Department with the highest increase of budget from last year to this year and budget amount increase
+
+SELECT TOP 1 Name, (Budget_This_Year - COALESCE(Budget_Last_Year, 0)) AS amount
+FROM DEPARTMENTS
+ORDER BY 2 DESC;
+-- This is how I would do it in MS SQL SERVER, but in SQL FIDDLE (running MySQL) there's no 
+-- TOP command, so I used the LIMIT command.
+
+/*SELECT Name, (Budget_This_Year - COALESCE(Budget_Last_Year, 0)) AS amount
+FROM DEPARTMENTS
+ORDER BY 2 DESC
+LIMIT 1;*/
+
+
+-- 3.3 For each employee, the name of the department they manage
+
+SELECT E.Name AS 'Employee name', D.Name AS 'Department Managed'
+FROM EMPLOYEES AS E
+JOIN DEPARTMENTS AS D
+ON E.ID = D.Mgr_Id;
+
+-- 3.4 Name of each manager and average salary in their department
+
+SELECT NMI.Name, D_IA.Dep_Avg
+FROM EMPLOYEES E
+JOIN(
+	SELECT E.Name, D.Mgr_Id, D.ID
+	FROM EMPLOYEES E
+	JOIN DEPARTMENTS D
+	ON E.ID = D.Mgr_Id) AS NMI
+ON E.ID = NMI.Mgr_Id
+JOIN(
+	SELECT E.Dep_Id, AVG(E.Salary) AS Dep_Avg
+	FROM EMPLOYEES E
+	GROUP BY E.Dep_Id) AS D_IA
+	ON E.Dep_Id = D_IA.Dep_Id;
+
+
+-- 3.5 Number of departments managed by an employee belonging to another department
+
+SELECT COUNT(departments) as 'departments'
+FROM
+	(SELECT (E.Dep_Id - D.ID) AS departments
+	FROM EMPLOYEES E
+	JOIN DEPARTMENTS D
+	ON E.ID = D.Mgr_Id) AS S
+WHERE departments > 0;
+
+
+-- 3.6. For each manager, employee id and location of the department they manage
+
+SELECT Mgr_Id AS 'Employee id', Location
+FROM DEPARTMENTS
+WHERE Mgr_ID IS NOT NULL;
+-- D.Mgr_Id is the same as E.ID, so we can just solve the query using D table.
+
+
+-- 3.8 Name of departments spending less than 2000 in salaries
+
+SELECT D.Name AS 'Department name'
+FROM DEPARTMENTS D
+WHERE D.ID NOT IN
+	(SELECT E.Dep_Id
+	FROM EMPLOYEES E
+	GROUP BY E.Dep_Id
+	HAVING SUM(E.Salary) > 2000)
+
+-- 3.9 For the oldest employee of every department, show all the employee information (ID, Name, Age, Salary, Bonus, Addres City, Dep_Id)
+SELECT *
+FROM EMPLOYEES
+WHERE AGE IN 
+	(SELECT MAX(AGE) AS 'O_Age'
+	FROM EMPLOYEES
+	GROUP BY Dep_Id);
+
+
+-- 3.10 For each of the employee’s address city, calculate the following metrics: Total 
+-- number of employees, Total number of employees with a bonus, Total salary of employees 
+-- with bonus, Average age, Average salary
+
+SELECT Address_City, COUNT(*) AS 'Total Num Employees', COUNT(Bonus) AS 'Total_With_Bonus', SUM(Salary) AS 'Salary with Bonus', AVG(Age) AS 'Average Age', AVG(Salary) AS 'Average Salary'  
+FROM EMPLOYEES
+GROUP BY Address_City
+
+
